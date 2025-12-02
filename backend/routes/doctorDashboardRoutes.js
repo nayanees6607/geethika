@@ -4,7 +4,7 @@ const DoctorPatient = require('../models/DoctorPatient');
 const DoctorSchedule = require('../models/DoctorSchedule');
 const Doctor = require('../models/Doctor');
 const User = require('../models/User');
-const Patient = require('../models/Patient');
+// const Patient = require('../models/Patient'); // Removed as we use User
 const Appointment = require('../models/Appointment');
 const { authMiddleware } = require('../middleware/auth');
 const { sendAppointmentConfirmation, sendAppointmentRejection } = require('../services/emailService');
@@ -67,7 +67,8 @@ router.get('/patients', async (req, res) => {
         // If search is provided, we need to find users matching the search first
         if (search) {
             const searchRegex = new RegExp(search, 'i');
-            const matchingUsers = await Patient.find({
+            const matchingUsers = await User.find({
+                role: 'patient',
                 $or: [
                     { name: searchRegex },
                     { email: searchRegex },
@@ -133,7 +134,7 @@ router.patch('/patients/:patientId/accept', async (req, res) => {
         }
 
         // Send email confirmation to patient
-        const patient = await Patient.findById(patientId);
+        const patient = await User.findById(patientId);
         const doctor = await Doctor.findById(doctorId);
 
         console.log(`Accepting patient: ${patientId}, Doctor: ${doctorId}`);
@@ -192,7 +193,7 @@ router.patch('/patients/:patientId/reject', async (req, res) => {
         }
 
         // Send email rejection to patient
-        const patient = await Patient.findById(patientId);
+        const patient = await User.findById(patientId);
         const doctor = await Doctor.findById(doctorId);
 
         if (patient && patient.email && doctor) {

@@ -6,7 +6,7 @@ const Appointment = require('../models/Appointment');
 const Notification = require('../models/Notification');
 const Doctor = require('../models/Doctor');
 const User = require('../models/User');
-const Patient = require('../models/Patient');
+// const Patient = require('../models/Patient'); // Removed
 const { authMiddleware } = require('../middleware/auth');
 const { sendDoctorNotificationEmail } = require('../services/emailService');
 
@@ -82,7 +82,7 @@ router.post('/appointments', authMiddleware, async (req, res) => {
         }
 
         // Create notification for doctor
-        const patient = await Patient.findById(patientId);
+        const patient = await User.findById(patientId);
         const doctor = await Doctor.findById(doctorId);
 
         if (doctor && patient) {

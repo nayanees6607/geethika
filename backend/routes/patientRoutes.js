@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const Patient = require('../models/Patient');
+// const Patient = require('../models/Patient'); // Removed
 const Prescription = require('../models/Prescription');
 const DoctorPatient = require('../models/DoctorPatient');
 const auth = require('../middleware/auth'); // Assuming you have this or will create it
@@ -99,7 +99,7 @@ router.get('/prescriptions/:userId', async (req, res) => {
 // Get Patient's Medical History
 router.get('/medical-history/:userId', async (req, res) => {
     try {
-        const user = await Patient.findById(req.params.userId).select('medicalHistory');
+        const user = await User.findById(req.params.userId).select('medicalHistory');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

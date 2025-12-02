@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Patient = require('../models/Patient');
+// const Patient = require('../models/Patient'); // Removed
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendOTPEmail } = require('../services/emailService');
@@ -47,80 +47,54 @@ exports.register = async (req, res) => {
 
         const userRole = role || 'patient';
 
-        // Check if user already exists in either collection
+        // Check if user already exists
         const existingUser = await User.findOne({ email });
-        const existingPatient = await Patient.findOne({ email });
 
-        if (existingUser || existingPatient) {
+        if (existingUser) {
             return res.status(400).json({ message: 'User already exists with this email' });
         }
 
-        let user;
+        // Create new user (unified for all roles including patient)
+        const userData = {
+            email,
+            password,
+            role: userRole,
+            phone
+        };
 
-        if (userRole === 'patient') {
-            // Create new patient in Patient collection
-            const patientData = {
-                email,
-                password,
-                role: 'patient',
-                phone
-            };
-
-            if (firstName && lastName) {
-                patientData.firstName = firstName;
-                patientData.lastName = lastName;
-                patientData.name = `${firstName} ${lastName}`;
-            } else if (name) {
-                patientData.name = name;
-            }
-
-            if (dateOfBirth) patientData.dateOfBirth = dateOfBirth;
-            if (gender) patientData.gender = gender;
-            if (emergencyContact) patientData.emergencyContact = emergencyContact;
-            if (insuranceProvider) patientData.insuranceProvider = insuranceProvider;
-            if (allergies) patientData.allergies = allergies;
-            if (currentMedications) patientData.currentMedications = currentMedications;
-            if (medicalHistory) patientData.medicalHistory = medicalHistory;
-            if (req.body.profileImage) patientData.profileImage = req.body.profileImage;
-
-            user = new Patient(patientData);
-            await user.save();
-        } else {
-            // Create new user in User collection (for other roles)
-            const userData = {
-                email,
-                password,
-                role: userRole,
-                phone
-            };
-
-            if (firstName && lastName) {
-                userData.firstName = firstName;
-                userData.lastName = lastName;
-                userData.name = `${firstName} ${lastName}`;
-            } else if (name) {
-                userData.name = name;
-            }
-
-            // Add doctor-specific fields if role is doctor
-            if (userRole === 'doctor') {
-                userData.specialization = specialization;
-                userData.qualifications = qualifications;
-                userData.experience = experience;
-                userData.consultationFee = consultationFee;
-            }
-
-            // Add pharmacist-specific fields if role is pharmacist
-            if (userRole === 'pharmacist') {
-                userData.employeeId = employeeId;
-                userData.pharmacyName = pharmacyName;
-                userData.licenseNumber = licenseNumber;
-                userData.yearsOfExperience = yearsOfExperience;
-            }
-
-            user = new User(userData);
-            await user.save();
+        if (firstName && lastName) {
+            userData.firstName = firstName;
+            userData.lastName = lastName;
+            userData.name = `${firstName} ${lastName}`;
+        } else if (name) {
+            userData.name = name;
         }
+
+        // Add role-specific fields
+        if (userRole === 'doctor') {
+            userData.specialization = specialization;
+            userData.qualifications = qualifications;
+            userData.experience = experience;
+            userData.consultationFee = consultationFee;
+        } else if (userRole === 'pharmacist') {
+            userData.employeeId = employeeId;
+            userData.pharmacyName = pharmacyName;
+            userData.licenseNumber = licenseNumber;
+            userData.yearsOfExperience = yearsOfExperience;
+        } else if (userRole === 'patient') {
+            // Add patient-specific fields
+            if (dateOfBirth) userData.dateOfBirth = dateOfBirth;
+            if (gender) userData.gender = gender;
+            if (emergencyContact) userData.emergencyContact = emergencyContact;
+            if (insuranceProvider) userData.insuranceProvider = insuranceProvider;
+            if (allergies) userData.allergies = allergies;
+            if (currentMedications) userData.currentMedications = currentMedications;
+            if (medicalHistory) userData.medicalHistory = medicalHistory;
+            if (req.body.profileImage) userData.profileImage = req.body.profileImage;
+        }
+
+        user = new User(userData);
+        await user.save();
 
         // Generate JWT token
         const token = jwt.sign(
@@ -150,15 +124,8 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check Patient collection first
-        let user = await Patient.findOne({ email });
-        let model = Patient;
-
-        // If not found in Patient, check User collection
-        if (!user) {
-            user = await User.findOne({ email });
-            model = User;
-        }
+        // Check User collection
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });

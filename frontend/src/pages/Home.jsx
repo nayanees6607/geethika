@@ -6,6 +6,7 @@ import './Home.css';
 const Home = () => {
     const { isAuthenticated } = useAuth();
 
+
     return (
         <div className="home">
             {/* Hero Section */}
@@ -14,7 +15,7 @@ const Home = () => {
                 <div className="hero-shape shape-2"></div>
 
                 <div className="container hero-container">
-                    <div className="hero-content fade-in">
+                    <div className="hero-content">
                         <h1 className="hero-title">
                             Healthcare Made <span className="highlight">Simple</span>
                         </h1>
@@ -44,7 +45,7 @@ const Home = () => {
                         </div>
                     </div>
 
-                    <div className="hero-image fade-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="hero-image" style={{ animationDelay: '0.2s' }}>
                         <div className="hero-illustration float">
                             {/* You can replace this with an actual <img> or SVG */}
                             <img
